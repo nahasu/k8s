@@ -6,8 +6,8 @@ BOX_VERSION = "20220423.0.0"
 N = 2
 
 # Version : Ex) k8s_V = '1.22.7'
-k8s_V = '1.27.0'
-cni_N = 'calico'
+k8s_V = '1.27.4'
+cni_N = 'cloud'
 
 Vagrant.configure("2") do |config|
 #-----Manager Node
@@ -50,4 +50,21 @@ Vagrant.configure("2") do |config|
     end
   end
 
+#-----Client PC Subnet
+    config.vm.define "k8s-pc" do |subconfig|
+      subconfig.vm.box = BOX_IMAGE
+      subconfig.vm.box_version = BOX_VERSION
+      subconfig.vm.provider "virtualbox" do |v|
+        v.customize ["modifyvm", :id, "--groups", "/Ingress-Lab"]
+        v.name = "Ingress-k8s-pc"
+        v.memory = 512
+        v.cpus = 1
+        v.linked_clone = true
+      end
+      subconfig.vm.hostname = "k8s-pc"
+      subconfig.vm.synced_folder "./", "/vagrant", disabled: true
+      subconfig.vm.network "private_network", ip: "192.168.10.150"
+      subconfig.vm.network "forwarded_port", guest: 22, host: 50150, auto_correct: true, id: "ssh"
+      subconfig.vm.provision "shell", path: "https://raw.githubusercontent.com/Beas-github/test/master/T2/client_pc.sh", args: N
+    end
 end
